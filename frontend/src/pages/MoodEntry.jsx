@@ -34,7 +34,25 @@ export default function MoodEntry() {
   if (!token) navigate("/login"); // redirect if token is missing
   }, [token, navigate]);
 
+  useEffect(() => {
+  const checkAuth = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return navigate("/login");
 
+    try {
+      const res = await axios.get("http://localhost:5000/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.data) {
+        navigate("/profile"); // redirect if profile doesn't exist
+      }
+    } catch (err) {
+      navigate("/login"); // token invalid or profile missing
+    }
+  };
+
+  checkAuth();
+}, [navigate]);
   const mediaRecorderRef = useRef(null);
   const videoRef = useRef(null);
   const handleLogout = () => {

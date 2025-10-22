@@ -10,12 +10,13 @@ export default function Login() {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      // Correct backend login endpoint
+      // Login request
       const { data } = await axios.post(
         "http://localhost:5000/api/auth/login",
         form
@@ -24,17 +25,25 @@ export default function Login() {
       // Save JWT token
       localStorage.setItem("token", data.token);
 
-      // Redirect based on profile completion
-      if (data.hasProfile) {
+      // Check if profile exists
+      try {
+        const profileRes = await axios.get("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${data.token}` },
+        });
+
+        // Profile exists → redirect to mood page
         navigate("/mood");
-      } else {
-        navigate("/profile");
+      } catch (err) {
+        // If 404, profile not found → redirect to profile page
+        if (err.response?.status === 404) {
+          navigate("/profile");
+        } else {
+          // Other errors
+          setError("Error checking profile: " + err.message);
+        }
       }
     } catch (err) {
-      console.error(err);
-      setError(
-        err.response?.data?.message || "Login failed. Check your credentials."
-      );
+      setError(err.response?.data?.message || "Login failed. Check your credentials.");
     }
   };
 
